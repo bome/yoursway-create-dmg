@@ -1,3 +1,11 @@
 #! /bin/bash
 test -f test2.dmg && rm test2.dmg
-./create-dmg --window-size 500 300 --background ~/Projects/eclipse-osx-repackager/build/background.gif --icon-size 96 --volname "Hyper Foo" --icon "Applications" 380 205 --icon "Eclipse OS X Repackager" 110 205 test2.dmg /Users/andreyvit/Projects/eclipse-osx-repackager/temp/Eclipse\ OS\ X\ Repackager\ r10/
+./create-dmg   \
+	--icon-size 96  \
+	--window-pos 413 295  \
+	--window-size 770 367  \
+	--icon Applications 527 187   \
+	--volname "Songbook Client v0.x"   \
+	--icon "Songbook-Client.app" 201 187  \
+	--background ~/songbook-client/macos_specific/Sbc/.bg/background.png  \
+	test2.dmg ~/songbook-client/build/ 

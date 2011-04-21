@@ -1,10 +1,9 @@
-on run -- for testing in script editor
-	process_disk_image("Adium X 1.0b20", "/Users/evands/adium-1.0/Release/Artwork")
-end run
-
-on process_disk_image(volumeName)
+on run argv
+	set volumeName to argv
 	tell application "Finder"
-		tell disk (volumeName as string)
+		set mounted_folder to (volumeName as string)
+		open mounted_folder
+		tell disk mounted_folder
 			open
 			
 			set theXOrigin to WINX
@@ -36,6 +35,8 @@ on process_disk_image(volumeName)
 			-- Positioning
 			POSITION_CLAUSE
 			-- set position of item "Adium.app" to {196, 273}
+			close container window
+			open mounted_folder
 			
 			-- Custom icons
 			-- my copyIconOfTo(artPath & "/ApplicationsIcon", "/Volumes/" & volumeName & "/Applications")
