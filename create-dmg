@@ -42,6 +42,8 @@ function usage() {
   echo "  --custom-icon file_name custom_icon_or_sample_file x y"
   echo "      set position and custom icon"
   echo "  --version         show tool version number"
+  echo "  --linktoappfolder create a link to /Application folder in dmg"
+  echo "  --keeprw          don't erase rw dmg, usefull to tweek icon position"
   echo "  -h, --help        display this help"
   exit 0
 }
@@ -51,7 +53,8 @@ WINY=60
 WINW=600
 WINH=400
 ICON_SIZE=128
-
+RMRW=rm
+LAPP=false
 while test "${1:0:1}" = "-"; do
   case $1 in
     --volname)
@@ -65,6 +68,15 @@ while test "${1:0:1}" = "-"; do
       BACKGROUND_FILE_NAME="$(basename $BACKGROUND_FILE)"
       BACKGROUND_CLAUSE="set background picture of opts to file \".background:$BACKGROUND_FILE_NAME\""
       shift; shift;;
+#    --eula)
+#      EULA_RSRC="$2"
+#	  shift;shift;;
+    --linktoappfolder)
+      LAPP=true
+      shift;;
+    --keeprw)
+      RMRW=true
+      shift;;
     --icon-size)
       ICON_SIZE="$2"
       shift; shift;;
@@ -96,6 +108,15 @@ test -z "$2" && {
   echo "Not enough arguments. Invoke with --help for help."
   exit 1
 }
+TDIR=$2
+echo  ${TDIR#*.}
+if [[ ${TDIR#*.} == "app" ]]
+then
+	echo "target is an app file, using temporary dirrectory"
+	LAPP=true
+	TDIR=$(mktemp -d -t createdmg)
+	cp -r $2 $TDIR
+fi
 
 DMG_PATH="$1"
 DMG_DIRNAME="$(dirname "$DMG_PATH")"
@@ -140,6 +161,16 @@ if ! test -z "$VOLUME_ICON_FILE"; then
   SetFile -c icnC "$MOUNT_DIR/.VolumeIcon.icns"
 fi
 
+#creating a link to the application folder if asked
+if [ ! -d "$DIRECTORY" ]  && [ $LAPP == true ]
+then
+	echo "creating a link to the /Applications/ folder inside image disk"
+	cd "$MOUNT_DIR"
+	pwd
+	ln -s /Applications .
+	cd -
+fi
+
 # run applescript
 APPLESCRIPT=$(mktemp -t createdmg)
 cat "$AUX_PATH/template.applescript" | sed -e "s/WINX/$WINX/g" -e "s/WINY/$WINY/g" -e "s/WINW/$WINW/g" -e "s/WINH/$WINH/g" -e "s/BACKGROUND_CLAUSE/$BACKGROUND_CLAUSE/g" -e "s/ICON_SIZE/$ICON_SIZE/g" | perl -pe  "s/POSITION_CLAUSE/$POSITION_CLAUSE/g" >"$APPLESCRIPT"
@@ -173,7 +204,7 @@ hdiutil detach "${DEV_NAME}"
 # compress image
 echo "Compressing disk image..."
 hdiutil convert "${DMG_TEMP_NAME}" -format UDZO -imagekey zlib-level=9 -o "${DMG_DIR}/${DMG_NAME}" >/dev/null
-rm -f "${DMG_TEMP_NAME}"
+$RMRW -f "${DMG_TEMP_NAME}"
 
 # adding EULA resources
 if [ ! -z "${EULA_RSRC}" -a "${EULA_RSRC}" != "-null-" ]; then
